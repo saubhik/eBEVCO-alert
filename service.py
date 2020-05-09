@@ -3,6 +3,7 @@ import logging
 import os
 import smtplib
 import time
+from typing import List
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -10,18 +11,19 @@ from selenium.common.exceptions import NoSuchElementException
 
 class Service:
     def setup_configs(self):
-        self._recipient: str
-        self._recipient = input("Please enter email address to notify: ")
+        self._recipients: List[str] = input(
+            "Please enter comma-separated email addresses to notify: "
+        ).split(",")
         self._notifier = {
             "email": os.environ["FROM_ADDR"],
             "password": os.environ["EMAIL_PASSWORD"],
         }
         logging.info(msg=f"Notifier = {self._notifier}")
-        logging.info(msg=f"Subscriber = {self._recipient}")
+        logging.info(msg=f"Subscribers = {self._recipients}")
 
     def send_email(self) -> None:
         from_addr = self._notifier["email"]
-        to_addrs = [self._recipient, from_addr]
+        to_addrs = self._recipients + [from_addr]
         subject = f"eBEVCO Delivery Available!"
         body = "Check out eBEVCO right now!"
         server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
