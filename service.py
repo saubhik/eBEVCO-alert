@@ -101,28 +101,32 @@ class Service:
             return
 
         while True:
-            time.sleep(1)
-            driver.find_element_by_xpath(
-                xpath="//span[contains(text(), 'Purchase Order')]"
-            ).click()
-            driver.find_element_by_xpath(
-                xpath="//*[contains(text(), 'Prepare Order')]"
-            ).click()
             try:
-                alert = driver.find_element_by_xpath(
-                    xpath="//*[contains(text(), "
-                    "'Sorry, we are overbooked and not taking any new orders now. "
-                    "Please bear with us. We will be back soon for accepting new "
-                    "orders')]"
-                )
-                logging.info(msg=alert.text)
+                time.sleep(1)
                 driver.find_element_by_xpath(
-                    xpath="//button[contains(text(), 'Close')]"
+                    xpath="//span[contains(text(), 'Purchase Order')]"
                 ).click()
-            except NoSuchElementException:
-                logging.info(msg="No Alerts! Sending email")
-                self.send_email()
-                logging.info("Email sent")
+                driver.find_element_by_xpath(
+                    xpath="//*[contains(text(), 'Prepare Order')]"
+                ).click()
+                try:
+                    alert = driver.find_element_by_xpath(
+                        xpath="//*[contains(text(), "
+                        "'Sorry, we are overbooked and not taking any new orders now. "
+                        "Please bear with us. We will be back soon for accepting new "
+                        "orders')]"
+                    )
+                    logging.info(msg=alert.text)
+                    driver.find_element_by_xpath(
+                        xpath="//button[contains(text(), 'Close')]"
+                    ).click()
+                except NoSuchElementException:
+                    logging.info(msg="No Alerts! Sending email")
+                    self.send_email()
+                    logging.info("Email sent")
+            except NoSuchElementException as exc:
+                logging.exception(msg=exc)
+                logging.info(msg="Retrying")
 
 
 if __name__ == "__main__":
