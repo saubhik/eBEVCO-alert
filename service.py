@@ -3,7 +3,7 @@ import logging
 import os
 import smtplib
 import time
-from typing import List
+from datetime import datetime, timedelta
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -20,8 +20,13 @@ class Service:
         }
         logging.info(msg=f"Notifier = {self._notifier}")
         logging.info(msg=f"Subscribers = {self._recipients}")
+        self.last_email_sent = None
 
     def send_email(self) -> None:
+        if self.last_email_sent:
+            if datetime.utcnow() - self.last_email_sent < timedelta(hours=1):
+                logging.info(msg="Not yet 1 hour")
+                return
         from_addr = self._notifier["email"]
         to_addrs = self._recipients + [from_addr]
         subject = f"eBEVCO Delivery Available!"
@@ -34,6 +39,8 @@ class Service:
             to_addrs=to_addrs,
             msg="Subject: {}\n\n{}".format(subject, body),
         )
+        self.last_email_sent = datetime.utcnow()
+        logging.info("Email sent")
 
     def run_service(self) -> None:
         self.setup_configs()
@@ -60,7 +67,7 @@ class Service:
         driver.find_element_by_xpath(xpath="//img[@id='notice_cl']").click()
 
         mobile_number_input = driver.find_element_by_xpath(
-            xpath="//input[@placeholder='Enter Registered Mobile No']"
+            xpath="//input[contains(@placeholder, 'Enter Registered Mobile No')]"
         )
         mobile_number_input.click()
         mobile_number = input("Please enter mobile number: ")
@@ -131,7 +138,6 @@ class Service:
                 except NoSuchElementException:
                     logging.info(msg="No Alerts! Sending email")
                     self.send_email()
-                    logging.info("Email sent")
             except NoSuchElementException as exc:
                 logging.exception(msg=exc)
                 logging.info(msg="Retrying")
